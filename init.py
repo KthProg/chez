@@ -69,7 +69,7 @@ def bfs(queue, states, transitions):
   item = queue.get()
   while item:
     nodes = expand_node(item, states, transitions[item])
-    // TODO: add new items to queue?
+    # TODO: add new items to queue?
     item = queue.get()
   return 0
 
