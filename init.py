@@ -64,7 +64,12 @@ def main():
     "cost": 0,
   })
 
-  print(bfs(frontier_queue, transitions, States.GRAND_RAPIDS))
+  result = bfs(frontier_queue, transitions, States.GRAND_RAPIDS)
+  print(result["state"]);
+  while "from" in result:
+    print(result["from"]["state"])
+    result = result["from"]
+
 
 
 def bfs(queue, transitions, goal):
@@ -81,7 +86,8 @@ def expand_node(node, action, node_transitions):
   action_transitions = [transition for transition in node_transitions if transition["action"] == action]
   action_transitions_with_running_cost = [{
     **transition,
-    "cost": transition["cost"] + node["cost"]
+    "cost": transition["cost"] + node["cost"],
+    "from": node
   } for transition in action_transitions]
   return action_transitions_with_running_cost
 
