@@ -52,26 +52,37 @@ transitions = {
     {
       "action": Actions.DRIVE,
       "state": States.GRAND_RAPIDS,
-      "cost": 5,
+      "cost": 7,
     }
   ]
 }
 
 def main():
-  start_state = States.ROSEVILLE
   frontier_queue = Queue()
-  frontier_queue.put(start_state)
+  frontier_queue.put({
+    "state": States.ROSEVILLE,
+    "cost": 0,
+  })
 
-  bfs(frontier_queue, States, transitions)
+  print(bfs(frontier_queue, transitions, States.GRAND_RAPIDS))
 
 
-def bfs(queue, states, transitions):
-  item = queue.get()
-  while item:
-    nodes = expand_node(item, states, transitions[item])
-    # TODO: add new items to queue?
-    item = queue.get()
-  return 0
+def bfs(queue, transitions, goal):
+  while True:
+    node = queue.get()
+    if node["state"] == goal:
+      return node
+    # TODO: attempt other actions?
+    child_nodes = expand_node(node, Actions.DRIVE, transitions[node["state"]])
+    for child_node in child_nodes:
+      queue.put(child_node)
 
-def expand_node(node, states, transitions):
-  return 0
+def expand_node(node, action, node_transitions):
+  action_transitions = [transition for transition in node_transitions if transition["action"] == action]
+  action_transitions_with_running_cost = [{
+    **transition,
+    "cost": transition["cost"] + node["cost"]
+  } for transition in action_transitions]
+  return action_transitions_with_running_cost
+
+main()
