@@ -1,5 +1,7 @@
 from enum import Enum
-from queue import Queue
+from queue import PriorityQueue, Queue
+from dataclasses import dataclass, field
+from typing import Any
 
 class States(Enum):
   DETROIT = 1
@@ -11,84 +13,100 @@ class States(Enum):
 class Actions(Enum):
   DRIVE = 1
 
+@dataclass(order=True)
+class Node:
+    state: States = field(compare=False)
+    cost: int = field(compare=False)
+    action: Actions = field(compare=False)
+    priority: int = field(compare=True, default=0)
+    prev: Any = field(compare=False, default=None)
+
 transitions = {
   States.DETROIT: [
-    {
-      "action": Actions.DRIVE,
-      "state": States.EASTPOINTE,
-      "cost": 10,
-    },
-    {
-      "action": Actions.DRIVE,
-      "state": States.ANN_ARBOR,
-      "cost": 5,
-    }
+    Node(
+      action = Actions.DRIVE,
+      state = States.EASTPOINTE,
+      cost = 10
+    ),
+    Node(
+      action = Actions.DRIVE,
+      state = States.ANN_ARBOR,
+      cost = 5,
+    )
   ],
   States.EASTPOINTE: [
-    {
-      "action": Actions.DRIVE,
-      "state": States.ROSEVILLE,
-      "cost": 5,
-    },
-    {
-      "action": Actions.DRIVE,
-      "state": States.DETROIT,
-      "cost": 5,
-    }
+    Node(
+      action = Actions.DRIVE,
+      state = States.ROSEVILLE,
+      cost = 5,
+    ),
+    Node(
+      action = Actions.DRIVE,
+      state = States.DETROIT,
+      cost = 5,
+    )
   ],
   States.ROSEVILLE: [
-    {
-      "action": Actions.DRIVE,
-      "state": States.EASTPOINTE,
-      "cost": 5,
-    }
+    Node(
+      action = Actions.DRIVE,
+      state = States.EASTPOINTE,
+      cost = 5,
+    )
   ],
   States.ANN_ARBOR: [
-    {
-      "action": Actions.DRIVE,
-      "state": States.DETROIT, 
-      "cost": 5,
-    },
-    {
-      "action": Actions.DRIVE,
-      "state": States.GRAND_RAPIDS,
-      "cost": 7,
-    }
+    Node(
+      action = Actions.DRIVE,
+      state = States.DETROIT, 
+      cost = 5,
+    ),
+    Node(
+      action = Actions.DRIVE,
+      state = States.GRAND_RAPIDS,
+      cost = 7,
+    )
   ]
 }
 
 def main():
-  frontier_queue = Queue()
-  frontier_queue.put({
-    "state": States.ROSEVILLE,
-    "cost": 0,
-  })
+  # frontier_queue = Queue()
+  frontier_queue = PriorityQueue()
+  frontier_queue.put(
+    Node(States.ROSEVILLE, 0, Actions.DRIVE)
+  )
 
   result = bfs(frontier_queue, transitions, States.GRAND_RAPIDS)
-  print(result["state"]);
-  while "from" in result:
-    print(result["from"]["state"])
-    result = result["from"]
+  print(result.state);
+  while result.prev != None:
+    print(result.prev.state)
+    result = result.prev
 
 
 
 def bfs(queue, transitions, goal):
+  visited = []
   while True:
     node = queue.get()
-    if node["state"] == goal:
+    if node.state == goal:
       return node
     # TODO: attempt other actions?
-    child_nodes = expand_node(node, Actions.DRIVE, transitions[node["state"]])
+    visited.append(node.state)
+    child_nodes = expand_node(node, Actions.DRIVE, transitions[node.state], visited)
     for child_node in child_nodes:
       queue.put(child_node)
 
-def expand_node(node, action, node_transitions):
-  action_transitions = [transition for transition in node_transitions if transition["action"] == action]
-  action_transitions_with_running_cost = [{
-    **transition,
-    "cost": transition["cost"] + node["cost"],
-    "from": node
-  } for transition in action_transitions]
+def expand_node(node, action, node_transitions, visited):
+  action_transitions = [
+    transition for transition in node_transitions
+    if transition.action == action and not transition.state in visited
+  ]
+  action_transitions_with_running_cost = [
+    Node(
+      transition.state,
+      transition.cost,
+      transition.action,
+      transition.cost + node.cost,
+      node
+    ) for transition in action_transitions]
   return action_transitions_with_running_cost
 
 main()
